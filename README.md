@@ -8,7 +8,7 @@ CONE provides HTTP content negotiation tools.
 
 ```lua
 local cone = require('cone')
-local http_accept_header = 'apples,oranges;q=0.7bananas;q=0.5'
+local http_accept_header = 'apples,oranges;q=0.7,bananas;q=0.5'
 local available_values = {'bananas','oranges'}
 local negotiated_value = cone.negotiate(http_accept_header, available_values)
 print(negotiated_value)

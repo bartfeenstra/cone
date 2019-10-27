@@ -1,6 +1,18 @@
 local cone = require('cone')
 
 describe('negotiate', function ()
+    it('nil header, with nil available, should not return', function ()
+        assert.is_nil(cone.negotiate(nil, nil))
+    end)
+
+    it('nil header, with none available, should not return', function ()
+        assert.is_nil(cone.negotiate(nil, {}))
+    end)
+
+    it('empty header, with nil available, should not return', function ()
+        assert.is_nil(cone.negotiate('', nil))
+    end)
+
     it('empty header, with none available, should not return', function ()
         assert.is_nil(cone.negotiate('', {}))
     end)

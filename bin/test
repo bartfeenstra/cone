@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+cd "$(dirname "$0")/.."
+
+trap tear_down INT TERM EXIT
+
+function tear_down() {
+    docker stop cone-test-nginx 1>/dev/null
+    docker container rm cone-test-nginx 1>/dev/null
+}
+
+# Run unit tests.
+busted
+
+# Test the nginx integration.
+docker build -t cone-test-nginx -f ./tests/resources/nginx/Dockerfile .
+docker run --name cone-test-nginx -d cone-test-nginx 1>/dev/null
+nginx_container_address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cone-test-nginx)
+# Missing Accept-Language request header should return the default locale in the Content-Language response header.
+curl -s -D - "$nginx_container_address:80" | grep -q 'Content-Language: nl' \
+  && echo 'SUCCESS: The response specified the default locale.' \
+  || (echo 'ERROR: The response did not specify the default locale.' && exit 1)
+# An Accept-Language request header asking for a single available locale should return that default in the
+# Content-Language response header.
+curl -s -D - -H 'Accept-Language: de' "$nginx_container_address:80" | grep -q 'Content-Language: de' \
+  && echo 'SUCCESS: The response specified the one requested locale.' \
+  || (echo 'ERROR: The response did not specify the one requested locale.' && exit 1)
+# An Accept-Language request header asking for a preffered available locale with fallbacks should return that default in
+# the Content-Language response header.
+curl -s -D - -H 'Accept-Language: de;q=0.1, en' "$nginx_container_address:80" | grep -q 'Content-Language: en' \
+  && echo 'SUCCESS: The response specified the preferred locale.' \
+  || (echo 'ERROR: The response did not specify the preferred locale.' && exit 1)

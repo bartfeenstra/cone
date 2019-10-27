@@ -1,11 +1,6 @@
-local pl_utils = require('pl.utils')
-
 local Cone = {}
 
 function Cone.negotiate(header, available_values)
-    pl_utils.assert_string(1, header)
-    pl_utils.assert_arg(2, available_values, 'table')
-
     header = header:gsub('%s+', '')
 
     if not available_values then
@@ -19,12 +14,7 @@ function Cone.negotiate(header, available_values)
     acceptable_values = {}
     unacceptable_values = {}
     for qualified_value in header:gmatch('([^,]+)') do
-        value, quality = pl_utils.splitv(qualified_value, ';q=')
-        if not quality then
-            quality = 1
-        else
-            quality = tonumber(quality)
-        end
+        value, quality = Cone.parse_qualified_value(qualified_value)
         if quality == 0 then
             table.insert(unacceptable_values, value)
         else
@@ -50,6 +40,17 @@ function Cone.negotiate(header, available_values)
     end
 
     return available_values[1]
+end
+
+function Cone.parse_qualified_value(qualified_value)
+    if qualified_value:find(';q=') then
+        value, quality = qualified_value:match("(.*)%;q=(.*)")
+        quality = tonumber(quality)
+    else
+        value = qualified_value
+        quality = 1
+    end
+    return value, quality
 end
 
 function contains(needle, haystack)

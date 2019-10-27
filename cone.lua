@@ -1,15 +1,15 @@
 local Cone = {}
 
 function Cone.negotiate(header, available_values)
-    header = header:gsub('%s+', '')
-
-    if not available_values then
+    if available_values == nil or available_values == {} then
         return nil
     end
 
-    if not header then
+    if header == nil or header == '' then
         return available_values[1]
     end
+
+    header = header:gsub('%s+', '')
 
     acceptable_values = {}
     unacceptable_values = {}

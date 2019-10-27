@@ -11,29 +11,24 @@ function tear_down() {
     docker container rm cone-test-nginx 1>/dev/null
 }
 
+# Run unit tests.
 busted
 
+# Test the nginx integration.
 docker build -t cone-test-nginx -f ./tests/resources/nginx/Dockerfile .
 docker run --name cone-test-nginx -d cone-test-nginx 1>/dev/null
 nginx_container_address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cone-test-nginx)
-
-
-
-
-
-# @todo Test Accept / Content-Type
-# @todo Test Accept-Charset / Content-Type
-# @todo Test Accept-Encoding / Content-Encoding
-# @todo Test Accept-Language / Content-Language
-
-curl -D - "$nginx_container_address:80"
-
-
-# @todo -s -o /dev/null
-#response=$(curl -H 'Accept-Language: nl' -D - "$nginx_container_address:80")
-#echo "$response" | grep 'Content-Language: nl' || echo 'The response did not specify the requested language.' && exit 1
-
-docker logs cone-test-nginx
-docker exec cone-test-nginx cat /var/log/nginx.log
-docker exec cone-test-nginx ls -la /usr/local/
-
+# Missing Accept-Language request header should return the default locale in the Content-Language response header.
+curl -s -D - "$nginx_container_address:80" | grep -q 'Content-Language: nl' \
+  && echo 'SUCCESS: The response specified the default locale.' \
+  || (echo 'ERROR: The response did not specify the default locale.' && exit 1)
+# An Accept-Language request header asking for a single available locale should return that default in the
+# Content-Language response header.
+curl -s -D - -H 'Accept-Language: de' "$nginx_container_address:80" | grep -q 'Content-Language: de' \
+  && echo 'SUCCESS: The response specified the one requested locale.' \
+  || (echo 'ERROR: The response did not specify the one requested locale.' && exit 1)
+# An Accept-Language request header asking for a preffered available locale with fallbacks should return that default in
+# the Content-Language response header.
+curl -s -D - -H 'Accept-Language: de;q=0.1, en' "$nginx_container_address:80" | grep -q 'Content-Language: en' \
+  && echo 'SUCCESS: The response specified the preferred locale.' \
+  || (echo 'ERROR: The response did not specify the preferred locale.' && exit 1)

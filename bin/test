@@ -36,6 +36,4 @@ curl -D - "$nginx_container_address:80"
 docker logs cone-test-nginx
 docker exec cone-test-nginx cat /var/log/nginx.log
 docker exec cone-test-nginx ls -la /usr/local/
-docker exec cone-test-nginx ls -la /usr/local/lib/luarocks/rocks-5.3
-#docker exec cone-test-nginx ls -la /usr/local/share/lua/5.3
 

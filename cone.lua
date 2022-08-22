@@ -34,7 +34,7 @@ function Cone.negotiate(header, available_values)
     end
 
     for _, available_value in ipairs(available_values) do
-        if not contains(available_value, unacceptable_values) then
+        if not Cone._contains(available_value, unacceptable_values) then
             return available_value
         end
     end
@@ -53,7 +53,7 @@ function Cone.parse_qualified_value(qualified_value)
     return value, quality
 end
 
-function contains(needle, haystack)
+function Cone._contains(needle, haystack)
     for _, haystack_value in pairs(haystack) do
         if haystack_value == needle then
             return true
